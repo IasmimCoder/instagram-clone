@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import br.edu.ifpb.instagram.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,12 +60,11 @@ public class UserServiceImplTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // Executar e verificar a exceção
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        RuntimeException exception = assertThrows(UserNotFoundException.class, () -> {
             userService.findById(userId);
         });
 
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("User not found with id: 999", exception.getMessage());
 
         // Verificar a interação com o mock
         verify(userRepository, times(1)).findById(userId);
