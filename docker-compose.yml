@@ -21,6 +21,7 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend/instagram/:/home/instagram
+      - /home/instagram/node_modules
 
   db:
     image: mariadb:lts
