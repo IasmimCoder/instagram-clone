@@ -1,6 +1,7 @@
 package br.edu.ifpb.instagram.service.impl;
 
 import br.edu.ifpb.instagram.exception.FieldAlreadyExistsException;
+import br.edu.ifpb.instagram.exception.UserNotFoundException;
 import br.edu.ifpb.instagram.model.dto.UserDto;
 import br.edu.ifpb.instagram.model.entity.UserEntity;
 import br.edu.ifpb.instagram.repository.UserRepository;
@@ -76,7 +77,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto findById(Long id) {
         UserEntity userEntity = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         return mapToDto(userEntity);
     }
 
