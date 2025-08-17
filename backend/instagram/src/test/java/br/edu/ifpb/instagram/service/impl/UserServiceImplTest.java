@@ -1,10 +1,6 @@
 package br.edu.ifpb.instagram.service.impl;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -94,6 +90,48 @@ public class UserServiceImplTest {
         verify(userRepository, times(0)).save(any(UserEntity.class));
     }
 
+    @Test
+    void should_createUser_when_emailAndUsernameDoNotExist() {
+        // Preparação do DTO de entrada
+        UserDto userDto = new UserDto(
+                null,
+                "José Luan Fernandes da Silva",
+                "Luan Fernandes",
+                "jose.luan@academico.ifpb.edu.br",
+                "password123",
+                null
+        );
+
+        // Configurar mocks
+        when(userRepository.existsByEmail(userDto.email())).thenReturn(false);
+        when(userRepository.existsByUsername(userDto.username())).thenReturn(false);
+
+        // Simular a entidade salva retornada pelo repositório
+        UserEntity savedUserEntity = new UserEntity();
+        savedUserEntity.setId(1L);
+        savedUserEntity.setFullName(userDto.fullName());
+        savedUserEntity.setUsername(userDto.username());
+        savedUserEntity.setEmail(userDto.email());
+        savedUserEntity.setEncryptedPassword("encryptedPassword");
+
+        when(userRepository.save(any(UserEntity.class))).thenReturn(savedUserEntity);
+
+        // Executar o método
+        UserDto result = assertDoesNotThrow(() -> userService.createUser(userDto));
+
+        // Verificar o retorno
+        assertNotNull(result);
+        assertEquals(savedUserEntity.getId(), result.id());
+        assertEquals(savedUserEntity.getFullName(), result.fullName());
+        assertEquals(savedUserEntity.getUsername(), result.username());
+        assertEquals(savedUserEntity.getEmail(), result.email());
+        assertNull(result.password()); // senha não é retornada
+
+        // Verificar interações com o mock
+        verify(userRepository, times(1)).existsByEmail(userDto.email());
+        verify(userRepository, times(1)).existsByUsername(userDto.username());
+        verify(userRepository, times(1)).save(any(UserEntity.class));
+    }
 
     @Test
     void deleteUser_existingUser_shouldDeleteSuccessfully() {
