@@ -3,11 +3,7 @@ package br.edu.ifpb.instagram.service.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +14,7 @@ import br.edu.ifpb.instagram.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import br.edu.ifpb.instagram.model.dto.UserDto;
@@ -32,6 +29,9 @@ public class UserServiceImplTest {
 
     @Autowired
     UserServiceImpl userService; // Classe sob teste
+
+    @MockitoBean
+    PasswordEncoder passwordEncoder;
 
     @Test
     void should_throwFieldAlreadyExistsException_when_emailAlreadyExists() {
@@ -173,7 +173,9 @@ public class UserServiceImplTest {
         UserEntity mockUserEntity = new UserEntity();
         mockUserEntity.setId(userId);
         mockUserEntity.setFullName("Paulo Pereira");
+        mockUserEntity.setUsername("paulodev");
         mockUserEntity.setEmail("paulo@ppereira.dev");
+        mockUserEntity.setEncryptedPassword("senhaCriptografada");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(mockUserEntity));
 
@@ -184,7 +186,12 @@ public class UserServiceImplTest {
         assertNotNull(userDto);
         assertEquals(mockUserEntity.getId(), userDto.id());
         assertEquals(mockUserEntity.getFullName(), userDto.fullName());
+        assertEquals(mockUserEntity.getUsername(), userDto.username());
         assertEquals(mockUserEntity.getEmail(), userDto.email());
+
+        // Esses campos devem SEMPRE vir nulos no DTO
+        assertNull(userDto.password());
+        assertNull(userDto.encryptedPassword());
 
         // Verificar a interação com o mock
         verify(userRepository, times(1)).findById(userId);
@@ -209,43 +216,52 @@ public class UserServiceImplTest {
 
     @Test
     void findAll_whenCalled_shouldReturnListOfUserDto() {
-        // Configurar o comportamento do mock
+
+        // Configurar o comportamento do mock do repositório
         UserEntity user1 = new UserEntity();
         user1.setId(1L);
         user1.setFullName("Paulo Pereira");
         user1.setUsername("paulodev");
         user1.setEmail("paulo@ppereira.dev");
+        user1.setEncryptedPassword("senhaCriptografada");
 
         UserEntity user2 = new UserEntity();
         user2.setId(2L);
         user2.setFullName("Maria Silva");
         user2.setUsername("marias");
         user2.setEmail("maria@silva.dev");
+        user2.setEncryptedPassword("senhaCriptografada");
 
         List<UserEntity> mockUsers = Arrays.asList(user1, user2);
-
         when(userRepository.findAll()).thenReturn(mockUsers);
 
         // Executar o método a ser testado
         List<UserDto> userDtos = userService.findAll();
 
-        // Verificar o resultado
+        // Verificações
         assertNotNull(userDtos);
         assertEquals(2, userDtos.size());
 
-        UserDto userDto1 = userDtos.getFirst();
+        UserDto dto1 = userDtos.getFirst();
+        assertEquals(user1.getId(), dto1.id());
+        assertEquals(user1.getFullName(), dto1.fullName());
+        assertEquals(user1.getUsername(), dto1.username());
+        assertEquals(user1.getEmail(), dto1.email());
 
-        assertEquals(user1.getId(), userDto1.id());
-        assertEquals(user1.getFullName(), userDto1.fullName());
-        assertEquals(user1.getUsername(), userDto1.username());
-        assertEquals(user1.getEmail(), userDto1.email());
+        assertNull(dto1.password());
+        assertNull(dto1.encryptedPassword());
 
-        assertEquals(user2.getId(), userDtos.get(1).id());
-        assertEquals(user2.getFullName(), userDtos.get(1).fullName());
-        assertEquals(user2.getUsername(), userDtos.get(1).username());
-        assertEquals(user2.getEmail(), userDtos.get(1).email());
+        UserDto dto2 = userDtos.get(1);
+        assertEquals(user2.getId(), dto2.id());
+        assertEquals(user2.getFullName(), dto2.fullName());
+        assertEquals(user2.getUsername(), dto2.username());
+        assertEquals(user2.getEmail(), dto2.email());
 
-        // Verificar a interação com o mock
+        assertNull(dto2.password());
+        assertNull(dto2.encryptedPassword());
+
+        // Verificar interação com o mock
         verify(userRepository, times(1)).findAll();
+        verifyNoMoreInteractions(userRepository);
     }
 }
