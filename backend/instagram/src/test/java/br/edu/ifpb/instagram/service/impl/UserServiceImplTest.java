@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -15,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import br.edu.ifpb.instagram.exception.FieldAlreadyExistsException;
 import br.edu.ifpb.instagram.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,36 @@ public class UserServiceImplTest {
 
     @Autowired
     UserServiceImpl userService; // Classe sob teste
+
+    @Test
+    void should_throwFieldAlreadyExistsException_when_emailAlreadyExists() {
+        // Preparação do DTO de entrada
+        UserDto userDto = new UserDto(
+                null,
+                "José Luan Fernandes da Silva",
+                "Luan Fernandes",
+                "jose.luan@academico.ifpb.edu.br",
+                "password123",
+                null
+        );
+
+        // Configurar o mock: o e-mail já existe
+        when(userRepository.existsByEmail(userDto.email())).thenReturn(true);
+
+        // Executar e verificar se a exceção é lançada
+        FieldAlreadyExistsException exception = assertThrows(FieldAlreadyExistsException.class, () -> {
+            userService.createUser(userDto);
+        });
+
+        assertEquals("E-email already in use.", exception.getMessage());
+
+        // Verificar que o método de username e save não foram chamados
+        verify(userRepository, times(1)).existsByEmail(userDto.email());
+        verify(userRepository, times(0)).existsByUsername(anyString());
+        verify(userRepository, times(0)).save(any(UserEntity.class));
+    }
+
+
 
     @Test
     void deleteUser_existingUser_shouldDeleteSuccessfully() {
