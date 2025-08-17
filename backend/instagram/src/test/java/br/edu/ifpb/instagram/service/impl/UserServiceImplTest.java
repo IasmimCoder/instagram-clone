@@ -58,7 +58,7 @@ public class UserServiceImplTest {
         when(userRepository.existsById(userId)).thenReturn(false);
 
         // Executar o método e verificar exceção
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> userService.deleteUser(userId));
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> userService.deleteUser(userId));
         assertEquals("User not found with id: 999", exception.getMessage());
 
         // Verificar a interação com o mock
@@ -98,7 +98,7 @@ public class UserServiceImplTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(UserNotFoundException.class, () -> {
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
             userService.findById(userId);
         });
 
@@ -134,12 +134,16 @@ public class UserServiceImplTest {
         assertNotNull(userDtos);
         assertEquals(2, userDtos.size());
 
-        assertEquals(user1.getId(), userDtos.get(0).id());
-        assertEquals(user1.getFullName(), userDtos.get(0).fullName());
-        assertEquals(user1.getEmail(), userDtos.get(0).email());
+        UserDto userDto1 = userDtos.getFirst();
+
+        assertEquals(user1.getId(), userDto1.id());
+        assertEquals(user1.getFullName(), userDto1.fullName());
+        assertEquals(user1.getUsername(), userDto1.username());
+        assertEquals(user1.getEmail(), userDto1.email());
 
         assertEquals(user2.getId(), userDtos.get(1).id());
         assertEquals(user2.getFullName(), userDtos.get(1).fullName());
+        assertEquals(user2.getUsername(), userDtos.get(1).username());
         assertEquals(user2.getEmail(), userDtos.get(1).email());
 
         // Verificar a interação com o mock
