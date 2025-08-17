@@ -18,6 +18,7 @@ import br.edu.ifpb.instagram.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import br.edu.ifpb.instagram.model.dto.UserDto;
@@ -32,6 +33,9 @@ public class UserServiceImplTest {
 
     @Autowired
     UserServiceImpl userService; // Classe sob teste
+
+    @MockitoBean
+    PasswordEncoder passwordEncoder;
 
     @Test
     void should_throwFieldAlreadyExistsException_when_emailAlreadyExists() {
@@ -131,6 +135,120 @@ public class UserServiceImplTest {
         verify(userRepository, times(1)).existsByEmail(userDto.email());
         verify(userRepository, times(1)).existsByUsername(userDto.username());
         verify(userRepository, times(1)).save(any(UserEntity.class));
+    }
+
+    @Test
+    void testUpdateUser_WhenUserDtoIsNull_ShouldThrowIllegalArgumentException() {
+
+        UserDto userDto = null;
+
+
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateUser(userDto),
+                "UserDto or UserDto.id must not be null");
+    }
+
+    @Test
+    void testUpdateUser_WhenUserDtoIdIsNull_ShouldThrowIllegalArgumentException() {
+
+        UserDto userDto = new UserDto(
+                null,
+                "Luan Fernandes",
+                "Luan Fernandes",
+                "jose.luan@academico.ifpb.edu.br",
+                "password123",
+                null
+        );
+
+
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateUser(userDto),
+                "UserDto or UserDto.id must not be null");
+    }
+
+    @Test
+    void testUpdateUser_WhenPasswordIsProvided_ShouldEncodeAndSetPassword() {
+        // Preparar DTO de entrada com senha
+        UserDto userDto = new UserDto(
+                1L,
+                "José Luan Fernandes da Silva",
+                "Luan Fernandes",
+                "jose.luan@academico.ifpb.edu.br",
+                "newPassword123",
+                null
+        );
+
+        // Preparar entidade existente retornada pelo repositório
+        UserEntity existingUser = new UserEntity();
+        existingUser.setId(1L);
+        existingUser.setFullName("Old Name");
+        existingUser.setUsername("oldUser");
+        existingUser.setEmail("old.email@test.com");
+        existingUser.setEncryptedPassword("oldEncryptedPassword");
+
+        // Configurar mocks
+        // simula que o usuário existe no banco e retorna existingUser
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        // simula que a senha será codificada, retornando "encodedPassword"
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedPassword");
+        // simula que o usuário será salvo, retornando o próprio objeto passado (existingUser).
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Executar método
+        UserDto updatedDto = userService.updateUser(userDto);
+
+        // Verificações
+        assertNotNull(updatedDto);
+        assertEquals("José Luan Fernandes da Silva", existingUser.getFullName());
+        assertEquals("Luan Fernandes", existingUser.getUsername());
+        assertEquals("jose.luan@academico.ifpb.edu.br", existingUser.getEmail());
+        assertEquals("encodedPassword", existingUser.getEncryptedPassword());
+
+        // Verificar interações com mocks
+        verify(userRepository, times(1)).findById(1L);
+        verify(passwordEncoder, times(1)).encode("newPassword123");
+        verify(userRepository, times(1)).save(existingUser);
+    }
+
+    @Test
+    void testUpdateUser_WhenPasswordIsNotProvided_ShouldUpdateOtherFieldsOnly() {
+        // Preparar DTO de entrada sem senha
+        UserDto userDto = new UserDto(
+                1L,
+                "Novo Nome",
+                "novoUser",
+                "novo.email@test.com",
+                null,
+                null
+        );
+
+        // Preparar entidade existente retornada pelo repositório
+        UserEntity existingUser = new UserEntity();
+        existingUser.setId(1L);
+        existingUser.setFullName("José Luan Fernandes da Silva");
+        existingUser.setUsername("Luan Fernandes");
+        existingUser.setEmail("jose.luan@academico.ifpb.edu.br");
+        existingUser.setEncryptedPassword("password123");
+
+        // Configurar mocks
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        // save retorna o mesmo objeto passado
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Executar método
+        UserDto updatedDto = userService.updateUser(userDto);
+
+        // Verificações
+        assertNotNull(updatedDto);
+        assertEquals("Novo Nome", updatedDto.fullName());
+        assertEquals("novoUser", updatedDto.username());
+        assertEquals("novo.email@test.com", updatedDto.email());
+        assertEquals("password123", existingUser.getEncryptedPassword()); // senha permanece igual
+
+        // Verificar interações com mocks
+        verify(userRepository, times(1)).findById(1L);
+        verify(passwordEncoder, times(0)).encode(anyString()); // não deve codificar senha
+        verify(userRepository, times(1)).save(existingUser);
     }
 
     @Test
