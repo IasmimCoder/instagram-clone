@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
         }
 
         UserEntity userEntityToUpdate = userRepository.findById(userDto.id())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userDto.id()));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userDto.id()));
 
         userEntityToUpdate.setFullName(userDto.fullName());
         userEntityToUpdate.setUsername(userDto.username());
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with id: " + id);
+            throw new UserNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
     }
