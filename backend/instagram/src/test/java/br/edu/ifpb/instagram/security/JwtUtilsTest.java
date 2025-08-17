@@ -3,8 +3,8 @@ package br.edu.ifpb.instagram.security;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,9 +14,6 @@ class JwtUtilsTest {
     @Autowired
     JwtUtils jwtUtils;
 
-    /**
-     * Testa se o token gerado contém o nome de usuário correto.
-     */
     @Test
     void generateToken_givenAuthentication_shouldContainUsername() {
         // Arrange: criar Authentication fake
@@ -32,9 +29,6 @@ class JwtUtilsTest {
         assertEquals(username, usernameFromToken);
     }
 
-    /**
-     * Testa se a validação retorna true para um token válido.
-     */
     @Test
     void validateToken_givenValidToken_shouldReturnTrue() {
         String username = "usuarioValido";
@@ -46,9 +40,6 @@ class JwtUtilsTest {
         assertTrue(isValid);
     }
 
-    /**
-     * Testa se a validação retorna false para um token inválido.
-     */
     @Test
     void validateToken_givenInvalidToken_shouldReturnFalse() {
         String invalidToken = "tokenInvalidoQualquer";
@@ -57,9 +48,6 @@ class JwtUtilsTest {
         assertFalse(isValid);
     }
 
-    /**
-     * Testa se é possível extrair o username de um token válido.
-     */
     @Test
     void getUsernameFromToken_givenValidToken_shouldReturnCorrectUsername() {
         String username = "usuarioExtraido";
@@ -70,4 +58,6 @@ class JwtUtilsTest {
 
         assertEquals(username, usernameFromToken);
     }
+
+
 }
