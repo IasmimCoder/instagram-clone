@@ -163,6 +163,34 @@ public class UserServiceImplTest {
     }
 
     @Test
+    void testUpdateUser_WhenUserDoesNotExist_ShouldThrowUserNotFoundException() {
+        // Preparar DTO de entrada com id existente
+        UserDto userDto = new UserDto(
+                999L, // id que não existe
+                "Nome Teste",
+                "usuarioTeste",
+                "email.teste@test.com",
+                "senha123",
+                null
+        );
+
+        // Configurar mock: usuário não encontrado
+        when(userRepository.findById(userDto.id())).thenReturn(Optional.empty());
+
+        // Executar método e verificar se lança exceção
+        UserNotFoundException exception = assertThrows(UserNotFoundException.class,
+                () -> userService.updateUser(userDto));
+
+        assertEquals("User not found with id: 999", exception.getMessage());
+
+        // Verificar interação com o mock
+        verify(userRepository, times(1)).findById(userDto.id());
+        verify(userRepository, times(0)).save(any(UserEntity.class));
+        verify(passwordEncoder, times(0)).encode(anyString());
+    }
+
+
+    @Test
     void testUpdateUser_WhenPasswordIsProvided_ShouldEncodeAndSetPassword() {
         // Preparar DTO de entrada com senha
         UserDto userDto = new UserDto(
@@ -205,6 +233,49 @@ public class UserServiceImplTest {
         verify(passwordEncoder, times(1)).encode("newPassword123");
         verify(userRepository, times(1)).save(existingUser);
     }
+
+    @Test
+    void testUpdateUser_WhenPasswordIsEmpty_ShouldNotEncodeOrChangePassword() {
+        // Preparar DTO de entrada com senha apenas espaços
+        UserDto userDto = new UserDto(
+                1L,
+                "Nome Atualizado",
+                "usuarioAtualizado",
+                "email.atualizado@test.com",
+                "   ", // senha com espaços
+                null
+        );
+
+        // Preparar entidade existente retornada pelo repositório
+        UserEntity existingUser = new UserEntity();
+        existingUser.setId(1L);
+        existingUser.setFullName("Nome Original");
+        existingUser.setUsername("usuarioOriginal");
+        existingUser.setEmail("email.original@test.com");
+        existingUser.setEncryptedPassword("senhaExistente");
+
+        // Configurar mocks
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Executar método
+        UserDto updatedDto = userService.updateUser(userDto);
+
+        // Verificações
+        assertNotNull(updatedDto);
+        assertEquals("Nome Atualizado", updatedDto.fullName());
+        assertEquals("usuarioAtualizado", updatedDto.username());
+        assertEquals("email.atualizado@test.com", updatedDto.email());
+
+        // Senha não deve ter sido alterada
+        assertEquals("senhaExistente", existingUser.getEncryptedPassword());
+
+        // Verificar interações com mocks
+        verify(userRepository, times(1)).findById(1L);
+        verify(passwordEncoder, times(0)).encode(anyString()); // senha não deve ser codificada
+        verify(userRepository, times(1)).save(existingUser);
+    }
+
 
     @Test
     void testUpdateUser_WhenPasswordIsNotProvided_ShouldUpdateOtherFieldsOnly() {
