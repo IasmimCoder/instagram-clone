@@ -65,6 +65,34 @@ public class UserServiceImplTest {
         verify(userRepository, times(0)).save(any(UserEntity.class));
     }
 
+    @Test
+    void should_throwFieldAlreadyExistsException_when_usernameAlreadyExists() {
+        // Preparação do DTO de entrada
+        UserDto userDto = new UserDto(
+                null,
+                "José Luan Fernandes da Silva",
+                "Luan Fernandes",
+                "jose.luan@academico.ifpb.edu.br",
+                "password123",
+                null
+        );
+
+        // Configurar o mock: email não existe, mas username já existe
+        when(userRepository.existsByEmail(userDto.email())).thenReturn(false);
+        when(userRepository.existsByUsername(userDto.username())).thenReturn(true);
+
+        // Executar e verificar se a exceção é lançada
+        FieldAlreadyExistsException exception = assertThrows(FieldAlreadyExistsException.class, () -> {
+            userService.createUser(userDto);
+        });
+
+        assertEquals("Username already in use.", exception.getMessage());
+
+        // Verificar interações com o mock
+        verify(userRepository, times(1)).existsByEmail(userDto.email());
+        verify(userRepository, times(1)).existsByUsername(userDto.username());
+        verify(userRepository, times(0)).save(any(UserEntity.class));
+    }
 
 
     @Test
