@@ -1,6 +1,8 @@
-package br.edu.ifpb.instagram.repository;
+package br.edu.ifpb.instagram.service.impl;
 
 import br.edu.ifpb.instagram.model.entity.UserEntity;
+import br.edu.ifpb.instagram.repository.UserRepository;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

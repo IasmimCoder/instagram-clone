@@ -1,4 +1,4 @@
-package br.edu.ifpb.instagram.repository;
+package br.edu.ifpb.instagram.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import br.edu.ifpb.instagram.model.entity.UserEntity;
+import br.edu.ifpb.instagram.repository.UserRepository;
 
 /**
  * Testes de integração específicos para validar cenários reais do UserService
