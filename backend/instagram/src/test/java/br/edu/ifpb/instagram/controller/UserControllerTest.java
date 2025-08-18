@@ -13,16 +13,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.ifpb.instagram.controller.UserController;
 import br.edu.ifpb.instagram.model.dto.UserDto;
 import br.edu.ifpb.instagram.model.request.UserDetailsRequest;
+import br.edu.ifpb.instagram.security.JwtUtils;
 import br.edu.ifpb.instagram.service.UserService;
+import br.edu.ifpb.instagram.service.impl.UserDetailsServiceImpl;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,11 +39,18 @@ public class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
-    
+
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private UserDetailsServiceImpl userDetailsService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
+    @WithMockUser
     void shouldReturnListOfUsers() throws Exception {
         List<UserDto> userDtos = Arrays.asList(
             new UserDto(1L, "Usuário 1", "user1", "user1@email.com", null, null),
@@ -56,17 +67,18 @@ public class UserControllerTest {
             .andExpect(jsonPath("$[1].username").value("user2"));
     }
 
-//     @Test
-//     void shouldReturnUserDetailsForGivenId() throws Exception {
-//         UserDto userDto = new UserDto(1L, "Usuário Teste", "testuser", "test@email.com", null, null);
+    @Test
+    @WithMockUser(username = "testuser", roles = {"USER"})
+    void shouldReturnUserDetailsForGivenId() throws Exception {
+        UserDto userDto = new UserDto(1L, "Usuário Teste", "testuser", "test@email.com", null, null);
 
-//         when(userService.findById(1L)).thenReturn(userDto);
+        when(userService.findById(1L)).thenReturn(userDto);
 
-//         mockMvc.perform(get("/users/{id}", 1L))
-//             .andExpect(status().isOk())
-//             .andExpect(jsonPath("$.id").value(1L))
-//             .andExpect(jsonPath("$.username").value("testuser"));
-//     }
+        mockMvc.perform(get("/users/{id}", 1L))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1L))
+            .andExpect(jsonPath("$.username").value("testuser"));
+    }
 
 //     @Test
 //     void shouldDeleteUserAndReturnSuccessMessage() throws Exception {
