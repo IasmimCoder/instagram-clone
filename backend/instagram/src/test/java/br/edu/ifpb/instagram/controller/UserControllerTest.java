@@ -13,15 +13,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import br.edu.ifpb.instagram.controller.UserController;
 import br.edu.ifpb.instagram.model.dto.UserDto;
 import br.edu.ifpb.instagram.model.request.UserDetailsRequest;
 import br.edu.ifpb.instagram.security.JwtUtils;
@@ -30,6 +27,8 @@ import br.edu.ifpb.instagram.service.impl.UserDetailsServiceImpl;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(UserController.class)
 public class UserControllerTest {
@@ -80,35 +79,39 @@ public class UserControllerTest {
             .andExpect(jsonPath("$.username").value("testuser"));
     }
 
-//     @Test
-//     void shouldDeleteUserAndReturnSuccessMessage() throws Exception {
-//         doNothing().when(userService).deleteUser(1L);
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void shouldDeleteUserAndReturnSuccessMessage() throws Exception {
+        doNothing().when(userService).deleteUser(1L);
 
-//         mockMvc.perform(delete("/users/{id}", 1L))
-//             .andExpect(status().isOk())
-//             .andExpect(content().string("user was deleted!"));
-//     }
+        mockMvc.perform(delete("/users/{id}", 1L)
+                .with(csrf())) // Adicione esta linha
+            .andExpect(status().isOk())
+            .andExpect(content().string("user was deleted!"));
+    }
 
-//     @Test
-//     void shouldUpdateUserAndReturnUpdatedDetails() throws Exception {
-//         // Dados de requisição para atualização
-//         UserDetailsRequest request = new UserDetailsRequest(
-//             1L, "Nome Atualizado", "user-updated", "updated@email.com", "senha123"
-//         );
-//         // DTO retornado após a atualização
-//         UserDto updatedUserDto = new UserDto(
-//             1L, "Nome Atualizado", "user-updated", "updated@email.com", null, null
-//         );
+    @Test
+    @WithMockUser(username = "testuser", roles = {"USER"}) // Simula autenticação
+    void shouldUpdateUserAndReturnUpdatedDetails() throws Exception {
+        // Dados de requisição para atualização
+        UserDetailsRequest request = new UserDetailsRequest(
+            1L, "Nome Atualizado", "user-updated", "updated@email.com", "senha123"
+        );
+        // DTO retornado após a atualização
+        UserDto updatedUserDto = new UserDto(
+            1L, "Nome Atualizado", "user-updated", "updated@email.com", null, null
+        );
 
-//         when(userService.updateUser(any(UserDto.class))).thenReturn(updatedUserDto);
+        when(userService.updateUser(any(UserDto.class))).thenReturn(updatedUserDto);
 
-//         mockMvc.perform(put("/users")
-//             .contentType(MediaType.APPLICATION_JSON)
-//             .content(objectMapper.writeValueAsString(request)))
-//             .andExpect(status().isOk())
-//             .andExpect(jsonPath("$.id").value(1L))
-//             .andExpect(jsonPath("$.fullName").value("Nome Atualizado"))
-//             .andExpect(jsonPath("$.username").value("user-updated"))
-//             .andExpect(jsonPath("$.email").value("updated@email.com"));
-//     }
+        mockMvc.perform(put("/users")
+                .with(csrf()) // Adicione esta linha para incluir o token CSRF
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.fullName").value("Nome Atualizado"))
+                .andExpect(jsonPath("$.username").value("user-updated"))
+                .andExpect(jsonPath("$.email").value("updated@email.com"));
+    } 
 }
