@@ -423,11 +423,12 @@ public class UserServiceImplTest {
         // Executar o método a ser testado
         List<UserDto> userDtos = userService.findAll();
 
-        // Verificações
+       /* // Verificações
         assertNotNull(userDtos);
         assertEquals(2, userDtos.size());
 
         UserDto dto1 = userDtos.getFirst();
+        //UserDto firstUser = userDtos.isEmpty() ? null : userDtos.get(0);
         assertEquals(user1.getId(), dto1.id());
         assertEquals(user1.getFullName(), dto1.fullName());
         assertEquals(user1.getUsername(), dto1.username());
@@ -443,7 +444,33 @@ public class UserServiceImplTest {
         assertEquals(user2.getEmail(), dto2.email());
 
         assertNull(dto2.password());
+        assertNull(dto2.encryptedPassword());*/
+        // Verificações
+        assertNotNull(userDtos);
+        assertEquals(2, userDtos.size());
+
+        // Pega o primeiro usuário de forma segura
+        UserDto dto1 = userDtos.isEmpty() ? null : userDtos.get(0);
+        assertNotNull(dto1); // garante que não é null
+
+        assertEquals(user1.getId(), dto1.id());
+        assertEquals(user1.getFullName(), dto1.fullName());
+        assertEquals(user1.getUsername(), dto1.username());
+        assertEquals(user1.getEmail(), dto1.email());
+
+        assertNull(dto1.password());
+        assertNull(dto1.encryptedPassword());
+
+        // Segundo usuário
+        UserDto dto2 = userDtos.get(1);
+        assertEquals(user2.getId(), dto2.id());
+        assertEquals(user2.getFullName(), dto2.fullName());
+        assertEquals(user2.getUsername(), dto2.username());
+        assertEquals(user2.getEmail(), dto2.email());
+
+        assertNull(dto2.password());
         assertNull(dto2.encryptedPassword());
+
 
         // Verificar interação com o mock
         verify(userRepository, times(1)).findAll();
