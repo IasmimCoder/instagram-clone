@@ -92,7 +92,7 @@ public class UserControllerTest {
         doNothing().when(userService).deleteUser(1L);
 
         mockMvc.perform(delete("/users/{id}", 1L)
-                .with(csrf())) // Adicione esta linha
+                .with(csrf()))
             .andExpect(status().isOk())
             .andExpect(content().string("user was deleted!"));
     }
